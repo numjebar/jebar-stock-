@@ -78,7 +78,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min
 .content{padding:14px 14px 0}
 
 /* ── DAY TABS ── */
-.day-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.day-bar{display:none!important;display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .day-bar::-webkit-scrollbar{display:none}
 .day-tab{padding:6px 15px;border-radius:20px;border:1px solid var(--border2);background:var(--card);font-size:12px;cursor:pointer;color:var(--muted);white-space:nowrap;font-family:'Sarabun',sans-serif;font-weight:500;flex-shrink:0}
 .day-tab.active{background:#2d5e10;color:#fff;border-color:#2d5e10}
@@ -198,11 +198,16 @@ select.qty:focus{border-color:#4a9080}
 
 <div class="content" id="main">
   <div style="height:10px"></div>
-  <div class="day-bar" id="day-bar"></div>
+  
 
   <div class="date-row">
     <label>วันที่</label>
     <input type="date" id="date-input" onchange="onDateChange()">
+  </div>
+
+  <div class="date-row" style="margin-bottom:12px">
+    <label>ผู้เช็ค</label>
+    <input type="text" id="checker-name" placeholder="ชื่อผู้เช็คสต๊อค..." style="flex:1;font-size:14px;border:none;background:transparent;color:var(--text);font-family:'Sarabun',sans-serif;outline:none">
   </div>
 
   <div class="opts-bar">
@@ -256,6 +261,18 @@ select.qty:focus{border-color:#4a9080}
 <div class="toast" id="toast"></div>
 
 <script>
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
 const DEF=['ปังไส้หมูหยอง','ปังไส้หมูหยอง ลูกเกด','ปังไส้ฝอยทอง','ชิโอะ กรอบ','ชิโอะ นุ่ม','คอนเฟลก กระป๋อง','คอนเฟลก แพค','คุ้กกี้ 1กิโล XL','คุ้กกี้ ครึ่งกิโล L','คุ้กกี้ 250กรัม M','คุ้กกี้ 150กรัม S','คุ้กกี้เนยสด','คุ้กกี้งา','คุ้กกี้ธัญพืช','คุ้กกี้คอนเฟลก','คุ้กกี้กระเทียมชีส','กลีบลำดวล','คุ้กกี้ไอซิ่ง กล่อง','คุ้กกี้ไอซิ่ง ชิ้น','โทส','คาลาเมลพุดดิ้ง','เค้กกล้วยหอม','โรล moten','เค้กส้ม','บลูเบอรี่เค้ก','สตรอเบอรี่เค้ก','เรดเวลเวด','โมจิ','โคคมะปัง','ปังแคนเบอรี่ครีมชีส','บานอฟฟี่พาย','ช้อคบอล','ไร้เทียมทาน','เกี๊ยว'];
 const KEY='jebar_v4';
 let store={items:[...DEF],days:{}};
@@ -308,7 +325,7 @@ function renderTable(){
   initDrag();
   upStats();
 }
-function onQty(el){const d=dd();d.qty[el.dataset.name]=el.value;el.className='qty'+(el.value?' filled':'');save();upStats();renderDayBar();}
+function onQty(el){const d=dd();d.qty[el.dataset.name]=el.value;el.className='qty'+(el.value?' filled':'');save();upStats();}
 function onNote(el){dd().notes[el.dataset.name]=el.value;save();}
 function upStats(){
   const d=dd();
@@ -319,20 +336,8 @@ function upStats(){
     <div class="stat"><div class="stat-lbl">กรอกแล้ว</div><div class="stat-val g">${f}</div></div>
     <div class="stat"><div class="stat-lbl">รวม</div><div class="stat-val gd">${s}</div></div>`;
 }
-function renderDayBar(){
-  const bar=document.getElementById('day-bar');
-  const days=[...new Set([day,...Object.keys(store.days).sort().reverse().slice(0,7)])];
-  bar.innerHTML='';
-  days.forEach(d=>{
-    const data=store.days[d];const h=data&&Object.values(data.qty||{}).some(v=>v);
-    const b=document.createElement('button');
-    b.className='day-tab'+(d===day?' active':'')+(h?' has-data':'');
-    b.textContent=thD(d);
-    b.onclick=()=>{day=d;document.getElementById('date-input').value=d;renderTable();renderDayBar();};
-    bar.appendChild(b);
-  });
-}
-function onDateChange(){day=document.getElementById('date-input').value;renderTable();renderDayBar();}
+function renderDayBar(){}
+function onDateChange(){day=document.getElementById('date-input').value;renderTable();}
 function openAdd(){document.getElementById('add-form').style.display='block';document.getElementById('new-name').focus();}
 function closeAdd(){document.getElementById('add-form').style.display='none';document.getElementById('new-name').value='';}
 function doAdd(){
@@ -350,7 +355,7 @@ function del(i){
 }
 function clearDay(){
   if(!confirm('ล้างจำนวนทั้งหมดของวันนี้?'))return;
-  store.days[day]={qty:{},notes:{}};save();renderTable();renderDayBar();toast('ล้างแล้ว ✓');
+  store.days[day]={qty:{},notes:{}};save();renderTable();toast('ล้างแล้ว ✓');
 }
 function exportData(){
   const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
@@ -431,139 +436,124 @@ function initDrag(){
 function saveImg(){
   const si=document.getElementById('save-icon');si.textContent='...';si.disabled=true;
   const d=dd();
-  const gold='#b8943a';
-  const dark='#1c1b18';
-  const muted='#7a786f';
-  const border='#e8e5dc';
-  const green='#2d5e10';
-
-  // Build rows: only items with qty OR note
   const showNote=document.getElementById('show-note').checked;
-  const rows=store.items.map(name=>({
-    name,
-    qty:d.qty[name]||'',
-    note:d.notes[name]||''
-  }));
+  const checker=document.getElementById('checker-name').value.trim();
 
-  const scale=2;
-  const W=640;
-  const padX=40;
-  const rowH=38;
-  const headerH=100;
-  const dateH=52;
-  const footerH=40;
-  const colQty=80;
-  const colNote=showNote?160:0;
+  // Only rows with qty OR note
+  const rows=store.items.map(name=>({
+    name,qty:d.qty[name]||'',note:d.notes[name]||''
+  })).filter(r=>r.qty||r.note);
+
+  if(rows.length===0){toast('ยังไม่มีข้อมูลที่จะบันทึก');si.innerHTML='&#8681;';si.disabled=false;return;}
+
+  const gold='#b8943a';const dark='#1c1b18';const muted='#7a786f';
+  const border='#e8e5dc';const green='#2d5e10';const notecol='#9a8060';
+
+  const scale=4; // high resolution
+  const W=640;const padX=40;const rowH=40;
+  const headerH=100;const dateH=56;const checkerH=checker?44:0;
+  const tableHeadH=36;const footerH=48;
+  const hasNote=showNote&&rows.some(r=>r.note);
+  const colQty=80;const colNote=hasNote?160:0;
   const colName=W-padX*2-colQty-colNote;
-  const H=headerH+dateH+48+rowH*rows.length+footerH+20;
+  const H=headerH+dateH+checkerH+tableHeadH+rowH*rows.length+footerH+16;
 
   const cv=document.createElement('canvas');
-  cv.width=W*scale; cv.height=H*scale;
+  cv.width=W*scale;cv.height=H*scale;
   const ctx=cv.getContext('2d');
   ctx.scale(scale,scale);
 
   // BG
-  ctx.fillStyle='#fff';
-  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#fdfcf9';ctx.fillRect(0,0,W,H);
 
-  // Header bar
-  ctx.fillStyle='#f9f8f5';
-  ctx.fillRect(0,0,W,headerH);
+  // Header
+  ctx.fillStyle='#f5f3ee';ctx.fillRect(0,0,W,headerH);
   ctx.strokeStyle=border;ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(0,headerH);ctx.lineTo(W,headerH);ctx.stroke();
 
-  // Logo text
-  ctx.fillStyle=dark;
-  ctx.font='bold 28px serif';
-  ctx.textAlign='left';
-  ctx.fillText('JE BAR',padX,44);
-  ctx.fillStyle=gold;
-  ctx.font='500 11px sans-serif';
-  ctx.fillText('COFFEE & PASTRY',padX,64);
+  // Brand
+  ctx.fillStyle=dark;ctx.font='bold 26px serif';ctx.textAlign='left';
+  ctx.fillText('JE BAR',padX,42);
+  ctx.fillStyle=gold;ctx.font='500 10px sans-serif';
+  ctx.fillText('COFFEE & PASTRY',padX,60);
 
-  // Title center
-  ctx.fillStyle=dark;
-  ctx.font='bold 18px sans-serif';
-  ctx.textAlign='center';
-  ctx.fillText('ใบเช็คสต๊อค',W/2,42);
-  ctx.fillStyle=muted;
-  ctx.font='12px sans-serif';
-  ctx.fillText('Stock Check',W/2,60);
+  // Title
+  ctx.fillStyle=dark;ctx.font='bold 20px sans-serif';ctx.textAlign='center';
+  ctx.fillText('ใบเช็คสต๊อค',W/2,40);
+  ctx.fillStyle=muted;ctx.font='11px sans-serif';
+  ctx.fillText('Stock Check',W/2,58);
 
-  // Date pill
+  // Divider line
+  ctx.strokeStyle=gold;ctx.lineWidth=0.5;
+  ctx.beginPath();ctx.moveTo(padX,headerH-8);ctx.lineTo(W-padX,headerH-8);ctx.stroke();
+
+  // Date row
   const[dy2,dm2,dd3]=day.split('-');
   const dateStr=`${dd3}/${dm2}/${parseInt(dy2)+543}`;
-  ctx.fillStyle=green;
-  ctx.beginPath();
-  ctx.roundRect(padX,headerH+10,120,32,16);
-  ctx.fill();
-  ctx.fillStyle='#fff';
-  ctx.font='bold 14px sans-serif';
-  ctx.textAlign='left';
-  ctx.fillText(dateStr,padX+14,headerH+31);
+  let curY=headerH+14;
+  ctx.fillStyle=muted;ctx.font='12px sans-serif';ctx.textAlign='left';
+  ctx.fillText('วันที่',padX,curY+14);
+  ctx.fillStyle=dark;ctx.font='bold 15px sans-serif';ctx.textAlign='right';
+  ctx.fillText(dateStr,W-padX,curY+14);
+  curY+=dateH;
+
+  // Checker row
+  if(checker){
+    ctx.strokeStyle=border;ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(padX,curY-8);ctx.lineTo(W-padX,curY-8);ctx.stroke();
+    ctx.fillStyle=muted;ctx.font='12px sans-serif';ctx.textAlign='left';
+    ctx.fillText('ผู้เช็คสต๊อค',padX,curY+14);
+    ctx.fillStyle=dark;ctx.font='bold 15px sans-serif';ctx.textAlign='right';
+    ctx.fillText(checker,W-padX,curY+14);
+    curY+=checkerH;
+  }
 
   // Table header
-  const tY=headerH+dateH+10;
   ctx.fillStyle='#1c1b18';
-  ctx.fillRect(padX,tY,W-padX*2,34);
-  ctx.fillStyle='#c9a84c';
-  ctx.font='bold 12px sans-serif';
-  ctx.textAlign='left';
-  ctx.fillText('รายการ',padX+12,tY+21);
+  ctx.fillRect(padX,curY,W-padX*2,tableHeadH);
+  ctx.fillStyle='#c9a84c';ctx.font='bold 12px sans-serif';ctx.textAlign='left';
+  ctx.fillText('รายการ',padX+12,curY+22);
   ctx.textAlign='center';
-  ctx.fillText('จำนวน',padX+colName+colQty/2,tY+21);
-  if(showNote){ctx.textAlign='left';ctx.fillText('หมายเหตุ',padX+colName+colQty+8,tY+21);}
+  ctx.fillText('จำนวน',padX+colName+colQty/2,curY+22);
+  if(hasNote){ctx.textAlign='left';ctx.fillText('หมายเหตุ',padX+colName+colQty+10,curY+22);}
+  curY+=tableHeadH;
 
   // Rows
   rows.forEach((r,i)=>{
-    const ry=tY+34+i*rowH;
     ctx.fillStyle=i%2===0?'#fdfaf4':'#f7f4ee';
-    ctx.fillRect(padX,ry,W-padX*2,rowH);
+    ctx.fillRect(padX,curY,W-padX*2,rowH);
     ctx.strokeStyle=border;ctx.lineWidth=0.5;
-    ctx.strokeRect(padX,ry,W-padX*2,rowH);
-
-    ctx.fillStyle=dark;
-    ctx.font='14px sans-serif';
-    ctx.textAlign='left';
-    // Clip name
-    ctx.save();
-    ctx.rect(padX+8,ry,colName-16,rowH);ctx.clip();
-    ctx.fillText(r.name,padX+8,ry+23);
-    ctx.restore();
-
-    // Qty
+    ctx.beginPath();ctx.moveTo(padX,curY+rowH);ctx.lineTo(W-padX,curY+rowH);ctx.stroke();
+    // Name
+    ctx.fillStyle=dark;ctx.font='14px sans-serif';ctx.textAlign='left';
+    ctx.save();ctx.beginPath();ctx.rect(padX+8,curY,colName-16,rowH);ctx.clip();
+    ctx.fillText(r.name,padX+8,curY+25);ctx.restore();
+    // Qty badge
     if(r.qty){
-      ctx.fillStyle='#ebf4dc';
-      ctx.beginPath();ctx.roundRect(padX+colName+8,ry+6,colQty-16,rowH-12,6);ctx.fill();
-      ctx.fillStyle=green;
-      ctx.font='bold 14px sans-serif';
-      ctx.textAlign='center';
-      ctx.fillText(r.qty,padX+colName+colQty/2,ry+23);
+      ctx.fillStyle='#ebf4dc';ctx.beginPath();
+      roundRect(ctx,padX+colName+8,curY+8,colQty-16,rowH-16,6);ctx.fill();
+      ctx.fillStyle=green;ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+      ctx.fillText(r.qty,padX+colName+colQty/2,curY+25);
     }
-
     // Note
-    if(showNote&&r.note){
-      ctx.fillStyle=muted;
-      ctx.font='12px sans-serif';
-      ctx.textAlign='left';
-      ctx.save();
-      ctx.rect(padX+colName+colQty+6,ry,colNote-8,rowH);ctx.clip();
-      ctx.fillText(r.note,padX+colName+colQty+8,ry+23);
-      ctx.restore();
+    if(hasNote&&r.note){
+      ctx.fillStyle=notecol;ctx.font='12px sans-serif';ctx.textAlign='left';
+      ctx.save();ctx.beginPath();ctx.rect(padX+colName+colQty+8,curY,colNote-10,rowH);ctx.clip();
+      ctx.fillText(r.note,padX+colName+colQty+10,curY+25);ctx.restore();
     }
+    curY+=rowH;
   });
 
   // Footer
-  const fy=tY+34+rows.length*rowH+12;
-  const filled=Object.values(d.qty).filter(v=>v).length;
-  const sum=Object.values(d.qty).reduce((a,v)=>a+(+v||0),0);
-  ctx.fillStyle=muted;
-  ctx.font='12px sans-serif';
-  ctx.textAlign='left';
-  ctx.fillText(`รายการทั้งหมด ${rows.length} | กรอกแล้ว ${filled} | รวม ${sum}`,padX,fy+16);
-  ctx.fillStyle=gold;
-  ctx.textAlign='right';
-  ctx.fillText('JE BAR Coffee & Pastry',W-padX,fy+16);
+  curY+=12;
+  ctx.strokeStyle=border;ctx.lineWidth=0.5;
+  ctx.beginPath();ctx.moveTo(padX,curY);ctx.lineTo(W-padX,curY);ctx.stroke();
+  curY+=14;
+  const sum=rows.reduce((a,r)=>a+(+r.qty||0),0);
+  ctx.fillStyle=muted;ctx.font='12px sans-serif';ctx.textAlign='left';
+  ctx.fillText(`รายการที่บันทึก ${rows.length} รายการ | รวม ${sum}`,padX,curY);
+  ctx.fillStyle=gold;ctx.textAlign='right';
+  ctx.fillText('JE BAR Coffee & Pastry',W-padX,curY);
 
   const a=document.createElement('a');
   a.download=`stock_${dd3}${dm2}${dy2}.png`;
@@ -575,7 +565,7 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 load();
 day=todayStr();
 document.getElementById('date-input').value=day;
-renderDayBar();renderTable();
+renderTable();
 </script>
 </body>
 </html>
